@@ -29,6 +29,7 @@ from typing import Dict
 from typing import List
 from typing import Union
 from wsgiref.simple_server import make_server
+import subprocess
 
 import riprova
 
@@ -122,6 +123,8 @@ EXPORTER_ERRORS = Counter(
 PROCESS_TIME = Counter(
     "bitcoin_exporter_process_time", "Time spent processing metrics from bitcoin node"
 )
+
+SOCKET_COUNT = Gauge("btcd_websocket_connections", "Number of websocket connections")
 
 SATS_PER_COIN = Decimal(1e8)
 
@@ -263,6 +266,10 @@ def do_hashps_gauge(num_blocks: int) -> None:
         gauge = hashps_gauge(num_blocks)
         gauge.set(hps)
 
+def get_websocket_connections(port):
+    command = f"netstat -an | grep ':{port}' | grep ESTABLISHED | wc -l"
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    return int(result.stdout.strip())
 
 def refresh_metrics() -> None:
     uptime = int(bitcoinrpc("uptime"))
@@ -277,6 +284,10 @@ def refresh_metrics() -> None:
     latest_blockstats = getblockstats(str(blockchaininfo["bestblockhash"]))
 
     # banned = bitcoinrpc("listbanned")
+
+    websocket_connections = get_websocket_connections()
+
+    SOCKET_COUNT.set(websocket_connections)
 
     BITCOIN_UPTIME.set(uptime)
     BITCOIN_BLOCKS.set(blockchaininfo["blocks"])
