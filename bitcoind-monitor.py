@@ -142,6 +142,7 @@ RETRIES = int(os.environ.get("RETRIES", 5))
 TIMEOUT = int(os.environ.get("TIMEOUT", 30))
 RATE_LIMIT_SECONDS = int(os.environ.get("RATE_LIMIT", 5))
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+WEBSOCKET_LISTEN_PORT = os.environ.get("WEBSOCKET_LISTEN_PORT", 8443)
 
 
 RETRY_EXCEPTIONS = (InWarmupError, ConnectionError, socket.timeout)
@@ -285,7 +286,7 @@ def refresh_metrics() -> None:
 
     # banned = bitcoinrpc("listbanned")
 
-    websocket_connections = get_websocket_connections()
+    websocket_connections = get_websocket_connections(WEBSOCKET_LISTEN_PORT)
 
     SOCKET_COUNT.set(websocket_connections)
 
